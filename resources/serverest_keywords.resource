@@ -89,3 +89,52 @@ Get All Products
     ${response}=    GET On Session    serverest    /produtos    headers=${headers}
     Status Should Be    200    ${response}
     RETURN    ${response.json()}
+
+Attempt to Create a Duplicate User
+    [Arguments]    ${name}    ${email}    ${password}    ${is_admin}
+    &{payload}=    Create Dictionary
+    ...    nome=${name}
+    ...    email=${email}
+    ...    password=${password}
+    ...    administrador=${is_admin}
+
+    ${response}=    POST On Session    serverest    /usuarios    json=${payload}    expected_status=400
+    Should Be Equal As Strings    ${response.json()}[message]    Este email já está sendo usado
+
+Attempt to Create a Duplicate Product
+    [Arguments]    ${token}    ${product_name}    ${price}    ${description}    ${quantity}
+    &{headers}=    Create Dictionary    Authorization=${token}
+    &{payload}=    Create Dictionary
+    ...    nome=${product_name}
+    ...    preco=${price}
+    ...    descricao=${description}
+    ...    quantidade=${quantity}
+
+    ${response}=    POST On Session    serverest    /produtos    headers=${headers}    json=${payload}    expected_status=400
+    Should Be Equal As Strings    ${response.json()}[message]    Já existe produto com esse nome
+
+Create Cart
+    [Arguments]    ${token}    ${product_id}    ${quantity}
+    &{headers}=    Create Dictionary    Authorization=${token}
+    
+    ${product_list}=    Create List    
+    
+    &{product_item}=    Create Dictionary    idProduto=${product_id}    quantidade=${quantity}
+    Append To List    ${product_list}    ${product_item}
+    &{payload}=    Create Dictionary    produtos=${product_list}
+
+    ${response}=    POST On Session    serverest    /carrinhos    headers=${headers}    json=${payload}
+    Status Should Be    201    ${response}
+    RETURN    ${response.json()}[_id]
+
+Conclude Purchase
+    [Arguments]    ${token}
+    &{headers}=    Create Dictionary    Authorization=${token}
+    ${response}=    DELETE On Session    serverest    /carrinhos/concluir-compra    headers=${headers}
+    Status Should Be    200    ${response}
+
+Cancel Purchase
+    [Arguments]    ${token}
+    &{headers}=    Create Dictionary    Authorization=${token}
+    ${response}=    DELETE On Session    serverest    /carrinhos/cancelar-compra    headers=${headers}
+    Status Should Be    200    ${response}

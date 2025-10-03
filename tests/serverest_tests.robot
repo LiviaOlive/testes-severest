@@ -7,7 +7,7 @@ ${ADMIN_EMAIL}       admin-hdmqwbhw@qa.com
 ${ADMIN_PASSWORD}    senhaforte
 
 *** Test Cases ***
-Cenário 00: Criar um Novo Administrador (Executar uma vez)
+Cenário 00: Criar um Novo Administrador
     [Tags]    SETUP
     ${random_name}=       Generate Random String    8    [LOWER]
     ${new_admin_email}=   Set Variable    admin-${random_name}@qa.com
@@ -97,7 +97,7 @@ Cenário 06: [POST] Tentar autenticar com credenciais inválidas
     ...    *HTTPError: 401 Client Error*
     ...    Get Auth Token    email@invalido.com    senhaerrada 
 
-Cenário 07: Tentar criar usuário com e-mail do Gmail (ESPERADO FALHAR)
+Cenário 07: [POST] Tentar criar usuário com e-mail do Gmail (ESPERADO FALHAR)
     [Tags]    NEGATIVE    RULES
     # Este teste vai FALHAR porque a API permite o cadastro, mas o teste espera um erro.
     ${random_name}=       Generate Random String    8    [LOWER]
@@ -111,7 +111,7 @@ Cenário 07: Tentar criar usuário com e-mail do Gmail (ESPERADO FALHAR)
     ...    senha123
     ...    false
 
-Cenário 08: Tentar criar usuário com e-mail do Hotmail (ESPERADO FALHAR)
+Cenário 08: [POST] Tentar criar usuário com e-mail do Hotmail (ESPERADO FALHAR)
     [Tags]    NEGATIVE    RULES
     # Este teste vai FALHAR porque a API permite o cadastro, mas o teste espera um erro.
     ${random_name}=       Generate Random String    8    [LOWER]
@@ -125,7 +125,7 @@ Cenário 08: Tentar criar usuário com e-mail do Hotmail (ESPERADO FALHAR)
     ...    senha123
     ...    false
 
-Cenário 09: Tentar criar usuário com senha menor que 5 caracteres (ESPERADO FALHAR)
+Cenário 09: [POST] Tentar criar usuário com senha menor que 5 caracteres (ESPERADO FALHAR)
     [Tags]    NEGATIVE    RULES
     # Este teste vai FALHAR porque a API permite senhas curtas, mas o teste espera um erro.
     ${random_name}=       Generate Random String    8    [LOWER]
@@ -139,7 +139,7 @@ Cenário 09: Tentar criar usuário com senha menor que 5 caracteres (ESPERADO FA
     ...    1234
     ...    false
 
-Cenário 10: Tentar criar usuário com senha maior que 10 caracteres (ESPERADO FALHAR)
+Cenário 10: [POST] Tentar criar usuário com senha maior que 10 caracteres (ESPERADO FALHAR)
     [Tags]    NEGATIVE    RULES
     # Este teste vai FALHAR porque a API permite senhas longas, mas o teste espera um erro.
     ${random_name}=       Generate Random String    8    [LOWER]
@@ -153,9 +153,75 @@ Cenário 10: Tentar criar usuário com senha maior que 10 caracteres (ESPERADO F
     ...    12345678901
     ...    false
 
-Cenário 11: Tentar buscar produtos sem autenticação (ESPERADO FALHAR)
+Cenário 11: [GET] Tentar buscar produtos sem autenticação (ESPERADO FALHAR)
     [Tags]    NEGATIVE    RULES    AUTH
     # Este teste vai FALHAR porque a API permite a busca pública, mas o teste espera um erro de autorização.
     Run Keyword And Expect Error
     ...    *HTTPError: 401 Client Error*
     ...    Get All Products
+
+Cenário 12: [POST] Tentar criar usuário com e-mail duplicado
+    [Tags]    NEGATIVE    RULES    USUARIOS
+    # Pré-condição: Criar um usuário para garantir que o e-mail exista
+    ${random_name}=       Generate Random String    8    [LOWER]
+    ${duplicate_email}=   Set Variable    duplicado-${random_name}@qa.com
+    Create New User
+    ...    Usuario Original
+    ...    ${duplicate_email}
+    ...    senha123
+    ...    false
+
+    # Ação Principal: Tentar criar outro usuário com o mesmo e-mail
+    Attempt to Create a Duplicate User
+    ...    Usuario Duplicado
+    ...    ${duplicate_email}
+    ...    outrasenha
+    ...    false
+
+Cenário 13: [POST] Tentar criar produto com nome duplicado
+    [Tags]    NEGATIVE    RULES    PRODUTOS
+    ${token}=    Get Auth Token    ${ADMIN_EMAIL}    ${ADMIN_PASSWORD}
+    ${product_name}=    Generate Random String    12
+
+    # Pré-condição: Criar um produto para garantir que o nome exista
+    Create New Product
+    ...    ${token}
+    ...    ${product_name}
+    ...    10
+    ...    Produto Original
+    ...    10
+
+    # Ação Principal: Tentar criar outro produto com o mesmo nome
+    Attempt to Create a Duplicate Product
+    ...    ${token}
+    ...    ${product_name}
+    ...    20
+    ...    Produto Duplicado
+    ...    20
+
+Cenário 14: [Fluxo Carrinho] Criar carrinho, concluir e cancelar compra
+    [Tags]    FLUXO    CARRINHOS
+    # --- Setup do Teste ---
+    # 1. Obter token de um usuário comum (não admin)
+    ${random_name}=       Generate Random String    8
+    ${user_email}=        Set Variable    user-${random_name}@qa.com
+    Create New User    Usuario Comum    ${user_email}    senha123    false
+    ${token}=    Get Auth Token    ${user_email}    senha123
+
+    # 2. Obter token de admin para criar um produto
+    ${admin_token}=    Get Auth Token    ${ADMIN_EMAIL}    ${ADMIN_PASSWORD}
+    ${product_name}=    Generate Random String    10
+    ${product_id}=    Create New Product    ${admin_token}    ${product_name}    150    Desc    50
+
+    # --- Ações Principais ---
+    # 1. Criar um carrinho com o produto
+    ${cart_id}=    Create Cart    ${token}    ${product_id}    2
+    Should Not Be Empty    ${cart_id}
+
+    # 2. Concluir a compra (isso esvazia e deleta o carrinho)
+    Conclude Purchase    ${token}
+
+    # 3. Tentar cancelar uma compra que não existe mais (deve falhar)
+    Run Keyword And Expect Error
+    ...    *HTTPError: 404 Client Error*
+    ...    Cancel Purchase    ${token}
