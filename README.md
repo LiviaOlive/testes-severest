@@ -51,7 +51,7 @@ SERVERESTAPI/
 │
 ├── .gitignore                     # Arquivo para ignorar arquivos não versionados
 ├── requirements.txt               # Dependências do projeto Python
-├── plano de testes                # Documentação em PDF
+├── plano-de-testes.pdf            # Documentação em PDF
 ├── README.md                      # Documentação do projeto
 ```
 
