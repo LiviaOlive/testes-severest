@@ -1,14 +1,13 @@
 # Automação de Testes de API - ServeRest com Robot Framework
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/robotframework/robotframework/master/doc/logo/robot-framework-logo.png" alt="Robot Framework Logo" width="250"/>
+  <img src="https://avatars.githubusercontent.com/u/574284?s=280&v=4" alt="Robot Framework Logo" width="230"/>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Framework-Robot%20Framework-green.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Library-Requests-orange.svg" alt="Library">
   <img src="https://img.shields.io/badge/Python-3.x-blue.svg" alt="Python">
-  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="Licença MIT">
 </p>
 
 > Este repositório contém um projeto de automação de testes para a API **ServeRest**, desenvolvido utilizando **Robot Framework** e a biblioteca **RequestsLibrary**. O objetivo é validar os principais endpoints e regras de negócio da aplicação.
